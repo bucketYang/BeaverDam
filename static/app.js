@@ -20,4 +20,7 @@ $(() => {
         isImageSequence: window.video.is_image_sequence,
         turkMetadata: window.video.turk_task,
     });
+    if(!window.video.is_image_sequence){
+       $(".rateinput").css({'display':'none'});
+    };
 });
