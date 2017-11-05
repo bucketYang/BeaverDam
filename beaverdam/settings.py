@@ -19,10 +19,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '8pje5%pxibt2c=&j_c+ly5v@x)$r77%h-x3%jluq-@)4^75)ak'
 DEBUG = True
 
-HELP_URL = os.environ.get('HELP_URL', 'https://raw.githubusercontent.com/antingshen/BeaverDam/master/default-instructions.md')
+HELP_URL = os.environ.get('HELP_URL', 'http://deepait.com')
 # this will show in a popup instead of the external HELP_URL
-HELP_USE_MARKDOWN = True
-HELP_EMBED = True
+HELP_USE_MARKDOWN = False
+HELP_EMBED = False
 URL_ROOT = os.environ.get('URL_ROOT', 'url_root')
 AWS_ID = os.environ.get('AWS_ID', 'aws_id')
 AWS_KEY = os.environ.get('AWS_KEY', 'aws_key')
@@ -51,7 +51,7 @@ Regards
 
 ALLOWED_HOSTS=["*"]
 
-assert MTURK_SANDBOX or not DEBUG
+#assert MTURK_SANDBOX or not DEBUG
 
 # Application definition
 
@@ -70,7 +70,6 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -133,9 +132,9 @@ CSRF_COOKIE_SECURE = not DEBUG
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'America/Los_Angeles'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -148,8 +147,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
-
-try:
-    from beaverdam.deploy_settings import *
-except ImportError as e:
-    pass
+STATIC_ROOT = BASE_DIR + '/static'

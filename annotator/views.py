@@ -150,9 +150,9 @@ def video(request, video_id):
             label_data.append({'name': l.name, 'color': l.color})
 
     help_content = ''
-    if settings.HELP_URL and settings.HELP_USE_MARKDOWN:
-        help_content = urllib.request.urlopen(settings.HELP_URL).read().decode('utf-8')
-        help_content = markdown.markdown(help_content)
+    #if settings.HELP_URL and settings.HELP_USE_MARKDOWN:
+    #    help_content = urllib.request.urlopen(settings.HELP_URL).read().decode('utf-8')
+    #    help_content = markdown.markdown(help_content)
 
     response = render(request, 'video.html', context={
         'label_data': label_data,

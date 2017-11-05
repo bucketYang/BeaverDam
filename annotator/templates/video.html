@@ -28,6 +28,18 @@
 {% endblock %}
 
 {% block body %}
+ <!-- search bar start -->
+ <div class="search">  
+  <input type="text" id="search_text" / placeholder="请输入要搜索的英雄"><input type="button" value="搜索">  
+  <a id="attention">您当前标注的是：<b id="ischecked"></b></a>
+  <div class="allannotations">
+    <div id="slide_button"><span id="type_num"></span>个标注对象的数据统计<i class="icon select-down" ></i></div>
+    <div id="salary"></div>
+  </div>
+  <div id="auto_div">  
+  </div>  
+</div>  
+<!-- search bar end -->
 <div class=" {{ iframe_mode|yesno:'empty, panel panel-default panel-space'}} player-container" id="player">
 
 <div class="panel-body">
@@ -40,46 +52,21 @@
       </label>
     {% endfor %}
 
-    <a class="btn btn-default" target="_blank" style="margin-left: 25px;"
-        {% if help_embed %} id="show-help" {% else %} href="{{help_url}}" {% endif %}>
-      Instructions &amp; Requirements
-    </a>
-
     <div id="submit-container">
-    {% if mturk_data.preview == False %}
-      {% if mturk_data.authenticated %}
-      <!-- Turker View -->
-        <form method="post" id="turk-form" action="https://{{ mturk_data.sandbox|yesno:'workersandbox,www'}}.mturk.com/mturk/externalSubmit">
-          <input type="hidden" value="{{ mturk_data.assignment_id }}" name="assignmentId">
-          <input type="hidden" value="{{ video_data.id }}" name="video-id">
-          <button id="submit-btn" type="submit"  class="btn btn-primary">Submit</button>
-        </form>
-
-      {% else %}
       <!-- Admin View -->
-        {% if mturk_data.last_email_sent_date != None %}
-          <i>E-mail sent on {{  mturk_data.last_email_sent_date }}</i>
-        {% endif %}
         <div id="submit-btn-group" class="btn-group" role="group">
           {% if request.user.is_staff == False %}
             <button id="submit-btn" type="button" class="btn btn-primary">Submit</button>
           {% else %}
-            <button id="submit-btn" type="button" class="btn btn-primary">Save</button>
+            <button id="submit-btn" type="button" class="btn btn-primary">保存</button>
 
             {% if mturk_data.status == "Awaiting Approval" or mturk_data.status == "Rejected" %}
-              <button id="btn-show-reject" type="button" class="btn btn-danger">Reject</button>
-              <button id="btn-show-accept" type="button" class="btn btn-success ">Accept</button>
-              {% if mturk_data.has_current_full_video_task %}
-                <button id="btn-show-email" type="button" class="btn">E-mail Worker</button>
-              {% endif %}
+              <button id="btn-show-reject" type="button" class="btn btn-danger">拒绝</button>
+              <button id="btn-show-accept" type="button" class="btn btn-success ">接受</button>
             {% endif %}
             <button class="btn" disabled>{{ mturk_data.status }}</button>
           {% endif %}
         </div>
-      {% endif %}
-    {% else %}
-      <h2>Preview Mode: Please accept HIT before working</h2>
-    {% endif %}
     </div>
   </div>
 
@@ -117,15 +104,19 @@
       </div>
 
       <span class="noselect">
-        <div class="glyphicon glyphicon-fast-backward player-control-goto-start" title="Go to start"></div>
-        <div class="glyphicon glyphicon-step-backward player-control-step-backward" title="One Frame Backward (shortcut - 'a')"></div>
-        <div class="glyphicon glyphicon-play player-control-play-pause" title="Play / Pause (shortcut - 'space'')"></div>
-        <div class="glyphicon glyphicon-step-forward player-control-step-forward" title="One Frame Forward (shortcut - 's')"></div>
-        <div class="glyphicon glyphicon-fast-forward player-control-goto-end"></div>
-        <div class="glyphicon glyphicon-trash player-control-delete-keyframe" title="Delete selected frame (shortcut - 'delete', 'd')"></div>
+        <div class="glyphicon glyphicon-fast-backward player-control-goto-start" title="移动到视频最开始"></div>
+        <div class="glyphicon glyphicon-step-backward player-control-step-backward" title="往后移动一帧 (快捷键 - 'a')"></div>
+        <div class="glyphicon glyphicon-play player-control-play-pause" title="播放 / 暂停 (快捷键 - '空格'')"></div>
+        <div class="glyphicon glyphicon-step-forward player-control-step-forward" title="往前移动一帧 (快捷键 - 's')"></div>
+        <div class="glyphicon glyphicon-fast-forward player-control-goto-end" title="移动到视频结尾"></div>
+        <div class="glyphicon glyphicon-trash player-control-delete-keyframe" title="删除选择的帧 (快捷键 - 'delete', 'd')"></div>
       </span>
       <input class="form-control player-control-time" id="frame-number" placeholder="0">
       <div class="pull-right">
+        <div class="rateinput">    
+          步长<input class="form-control" id="frameRate" placeholder="0.04" >秒    
+          <div class="input_alert">请输入0.01-60之间的数字<a class="close_tip">&times;</a> </div>           
+        </div>
         <input id="scale-checkbox" type="checkbox" />
         <label for="scale-checkbox">Scale to fit</label>
       </div>
@@ -136,13 +127,8 @@
 
 {% include "modals/generic_modal.html" %}
 {% include "modals/instructions.html" %}
-
-{% if mturk_data.authenticated == False %}
-
-  {% include "modals/accept_reject_form.html" %}
-  {% include "modals/email_form.html" %}
-
-{% endif %}
+{% include "modals/accept_reject_form.html" %}
+{% include "modals/email_form.html" %}
 
 </div>
 {% endblock %}
