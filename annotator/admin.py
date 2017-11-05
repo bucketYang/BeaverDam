@@ -57,7 +57,7 @@ class PublishedFilter(SimpleListFilter):
             return queryset
 
 class VideoAdmin(admin.ModelAdmin):
-    list_display =('id', 'video_url','filename','verified', 'is_published')
+    list_display =('id', 'video_url','filename','verified', 'is_published', 'populate')
     list_filter=[PublishedFilter, 'verified']
     search_fields=['filename', 'id']
     actions=[publish_to_turk]
@@ -77,7 +77,11 @@ class VideoAdmin(admin.ModelAdmin):
         return '<a target="_" href="/video/{}/">/video/{}/</a>'.format(obj.id, obj.id)
     video_url.allow_tags = True
     video_url.short_description = 'Video'
-        
+
+    def populate(self, obj):
+        return '<a target="_" href="/populate/{}/">/populate/{}/</a>'.format(obj.id, obj.id)
+    populate.allow_tags = True
+    populate.short_description = 'Populate to image list'
     
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Label)

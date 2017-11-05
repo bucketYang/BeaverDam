@@ -24,6 +24,7 @@ from .services import *
 
 import logging
 import ast
+import cv2
 
 logger = logging.getLogger()
 
@@ -157,8 +158,8 @@ def video(request, video_id):
     response = render(request, 'video.html', context={
         'label_data': label_data,
         'video_data': video_data,
-        'image_list': list(map(urllib.parse.quote, json.loads(video.image_list))) if video.image_list else 0,
-        'image_list_path': urllib.parse.quote(video.host),
+        'image_list': list(json.loads(video.image_list)) if video.image_list else 0,
+        'image_list_path': video.host,
         'help_url': settings.HELP_URL,
         'help_embed': settings.HELP_EMBED,
         'mturk_data': mturk_data,
@@ -199,6 +200,86 @@ class AnnotationView(View):
                         raise
         return HttpResponse('success')
 
+class Populate(View):
+    def get(self, request, video_id):
+        video = Video.objects.get(id=video_id)
+        if video is None:
+            response_msg = "Your DB is broken!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        mp4_filename = video.filename
+        if mp4_filename is None:
+            response_msg = "Your did not configure the video filename yet!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        if len(mp4_filename) < 5:
+            response_msg = "Your configured the video filename wrong, or you just left it empty!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        #/home/gemfield/BeaverDam/annotator
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        base_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+        video_file = "%s/%s" %(base_dir, mp4_filename)
+        base_video_file = os.path.basename(video_file)
+        host_prefix = '/static/images/'
+        img_dir = "%s%s" %(base_dir, host_prefix)
+
+        if not os.path.isfile(video_file):
+            response_msg = "could not find %s in the server !" %(video_file)
+            return HttpResponse(response_msg, content_type='application/json')
+        
+        #opencv stuff
+        video_cap = cv2.VideoCapture(video_file)
+        video_fps = video_cap.get(cv2.CAP_PROP_FPS)
+        video_width = int(video_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        video_height = int(video_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        video_frame_count = int(video_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if video_fps is None:
+            response_msg = "Could not get the fps of video, may be video had a wrong format!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        if video_fps < 5:
+            response_msg = "the fps of video is less than 5, may be video had a wrong format!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        if video_frame_count is None:
+            response_msg = "Could not get the frame count of video, may be video had a wrong format!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        if video_frame_count < 5:
+            response_msg = "the framecount of video is less than 5, may be video had a wrong format!"
+            return HttpResponse(response_msg, content_type='application/json')
+
+        #video_duration = video_frame_count/video_fps 
+        #print("duration of %s: %d: fps %f" %(video_file, video_frame_count, video_fps))
+        crop_path = '%s/%s/' %(img_dir, base_video_file)
+        if not os.path.exists(crop_path):
+            try:
+                os.makedirs(crop_path)
+            except Exception as e:
+                response_msg = str(e)
+                return HttpResponse(response_msg, content_type='application/json')
+
+        frame_num = 0
+        img_file_list = []
+        while frame_num < video_frame_count:
+            video_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+            got_frame, frame = video_cap.read()
+            if not got_frame:
+                response_msg = "Error: get frame %d failed on %s!" %(frame_num, video_file)
+                return HttpResponse(response_msg, content_type='application/json')
+
+            crop_fname = "%s_%s_%s_%s_%s.jpg" %(str(video_width), str(video_height), str(video_frame_count), str(frame_num), str(video_fps))
+            cv2.imwrite(crop_path + crop_fname, frame)
+
+            frame_num = frame_num + 10
+            img_file_list.append("%s%s/%s" %(host_prefix, base_video_file, crop_fname))
+
+        video.image_list = json.dumps(img_file_list)
+        video.save()
+        data_header = "Total image number: %d\n" %(len(img_file_list))
+        response_msg = data_header + video.image_list
+        return HttpResponse(response_msg, content_type='application/json')
 
 class ReceiveCommand(View):
 
