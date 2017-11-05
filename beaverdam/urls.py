@@ -6,7 +6,7 @@ from django.views.generic.base import RedirectView
 from annotator.views import *
 from annotator.services import *
 
-admin.site.site_header = 'BeaverDam'
+admin.site.site_header = '视频标注工具'
 
 urlpatterns = [
     url(r'^$', home),
@@ -24,7 +24,7 @@ urlpatterns = [
 
     url(r'^login/$', login,
         {'template_name': 'admin/login.html',
-            'extra_context': {'site_header': 'BeaverDam Login'}
+            'extra_context': {'site_header': '视频标注工具 登陆'}
         }, name='login'),
     url(r'^logout/$', logout),
     url(r'^accounts/', RedirectView.as_view(url='/')),
