@@ -266,6 +266,9 @@ class Populate(View):
             video_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
             got_frame, frame = video_cap.read()
             if not got_frame:
+                if len(img_file_list) > 100:
+                    frame_num = frame_num + 10
+                    continue
                 response_msg = "Error: get frame %d failed on %s!" %(frame_num, video_file)
                 return HttpResponse(response_msg, content_type='application/json')
 
