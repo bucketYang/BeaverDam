@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="/static/app.css"/>
+  <script src="/static/readmore/index.js"></script>
+  <script src='/static/vendor/echarts.common.min.js'></script>
+<style>
+
+  #show_nav{
+    width: 100%;
+    background-color: #eee;
+    padding: 0 50px;
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    font:20px solid microsoft yahei;
+  }
+  .show_box{
+    margin-top: 100px;
+    /*font:20px solid microsoft yahei;*/
+
+  }
+  #main{
+    margin: 100px auto;
+  }
+  #datalist{
+    margin-bottom: 80px;
+  }
+
+  .hr3{ height:5px;border:none;border-top:5px ridge #45D6D8;}
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+<!--nav-->
+<ul id='show_nav' class="nav nav-pills">
+  <li role="presentation"><a href="#main">图表展示</a></li>
+  <li role="presentation"><a href="#datalist">data list</a></li>
+  <li role="presentation"><a href="#warning">warning list</a></li>
+</ul>
+
+<div class="show_box">
+  <!--图表展示-->
+<div id="main" style="width: 100%;height:700px;"></div>
+  <!--datalist-->
+<div id='datalist' class="video-list">
+  <p class="hr3"></p>
+  <table class="table table-hover" style="width:100%; margin: 0 auto;">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Number</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in labels_data %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td class='name'>{{ i.0 }}</td>
+        <td class='number'>{{ i.1 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div id='warning' class="video-list">
+  <p class="hr3"></p>
+  <table class="table table-hover" style="width:100%; margin: 0 auto;">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Warning</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for msg in warning_msg %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ msg }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+  <script>
+
+      var names=document.getElementsByClassName('name');
+      var Nums=document.getElementsByClassName('number');
+      var nameData=[];
+      var numData=[];
+      var xData=[]
+      for (var i = 0; i < names.length; i++) {
+          nameData.push(names[i].innerText);
+          xData.push(i)
+      };
+      for (var i = 0; i < Nums.length; i++) {
+          numData.push(Nums[i].innerText)
+      }
+      var app = echarts.init(document.getElementById('main'));
+
+      option = {
+          title: {
+              show: "true",//是否显示标题，默认显示，可以不设置
+              text: "图表展示 ( 总共{{total_num}} )",//图表标题文本内容
+              textStyle:{
+                  fontWeight:400,
+                  bottom:"10px"
+              }
+          },
+          color: ['#3398DB'],
+          tooltip : {
+              trigger: 'axis',
+              axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                  type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+              },
+              formatter: function (params) {
+                  console.log(params);
+                  var res='<div><p>编号：'+params[0].name+'</p></div>'
+                  res+='<div><p>标注次数：'+params[0].data+'</p></div>'
+//                for(var i=0;i<params.length;i++){
+                  res+='<p>'+'对象:'+params[1].data+'</p>'
+//                    res+='<p>'+params[2].data+'</p>'
+//                }
+                  return res;
+              },
+          },
+          grid: {
+              left: '3%',
+              right: '4%',
+              bottom: '3%',
+              containLabel: true
+          },
+          xAxis : [
+              {
+                  type : 'category',
+                  data:xData,
+                  axisTick: {
+                      alignWithLabel: true
+                  }
+              },
+              {
+                  type : 'category',
+                  data:nameData,
+                  axisTick: {
+                      alignWithLabel: true
+                  },
+                  axisLabel:{show:false},
+              }
+          ],
+          yAxis : [
+              {
+                  type : 'value'
+              }
+          ],
+          series : [
+              {
+                  type:'bar',
+                  barWidth: '60%',
+                  data:numData
+              },
+              {
+                  type:'bar',
+//                barWidth: '60%',
+                  data:nameData
+              }
+          ]
+      };
+      app.setOption(option);
+      window.onresize = function(){
+          app.resize();
+      }
+  </script>
+{% endblock %}
+

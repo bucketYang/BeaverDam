@@ -158,6 +158,9 @@ div.imgplay {
 .player-rect-noreal {
     stroke-dasharray: 8, 4;
 }
+.player-rect-noreal-none {
+    display: none;
+}
 .player-rect-noselected.player-rect-noreal.player-rect-nosinglekeyframe {
     display: none;
 }
@@ -323,7 +326,7 @@ li {
     border-width: 6px;
   }  
 /*timerate 10.25*/
-.rateinput{
+.showchecked,.rateinput{
     display:inline-block;
     vertical-align:middle;
     margin:auto 5px;

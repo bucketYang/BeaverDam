@@ -28,6 +28,14 @@ import cv2
 
 logger = logging.getLogger()
 
+class DataRecord():
+    def __init__(self):
+        self.hero_name = ''
+        self.time = 0
+        self.x = 0
+        self.y = 0
+        self.w = 0
+        self.h = 0
 
 def home(request):
     need_annotating = Video.objects.filter(id__gt=0, verified=False)
@@ -36,6 +44,64 @@ def home(request):
         'thumbnail': True,
         'test': settings.AWS_ID,
         'title': 'Videos'
+    })
+
+def statistics(request):
+    record_list = []
+    hero_skin_dict = {}
+    warning_msg = []
+    total_num = 0
+
+    all_records = None
+    is_image = request.GET.get('image_list')
+    print('is_image get value: ',is_image)
+    if is_image is None:
+        all_records = Video.objects.all()
+    else:
+        all_records = Video.objects.exclude(image_list='')
+    all_labels = Label.objects.all()
+    for label in all_labels:
+        if label.name in hero_skin_dict:
+            msg = "%s is duplicated!" %(label.name)
+            warning_msg.append(msg)
+
+        hero_skin_dict[label.name] = 0
+
+    for i in all_records:
+        if i.annotation is None:
+            msg = "%d [%s] annotation is none" %(i.id, i.filename)
+            warning_msg.append(msg)
+            continue
+
+        if len(i.annotation) < 20:
+            msg = "%d [%s] annotation is invalid" %(i.id, i.filename)
+            warning_msg.append(msg)
+            continue
+
+        try:
+            json_res = json.loads(i.annotation)
+            for annotation in json_res:
+                hero_name = annotation['type']
+                #.encode('utf-8').strip()
+                keyframes = annotation["keyframes"]
+                hero_num = len(keyframes)
+
+                if hero_name not in hero_skin_dict:
+                    msg = "%d [%s] annotation contains invalid label: %s" %(i.id, i.filename, hero_name)
+                    warning_msg.append(msg)
+                    continue
+                    
+                hero_skin_dict[hero_name] += hero_num
+                total_num += hero_num
+            
+        except Exception as e:
+            warning_msg.append(str(e))
+            
+    hero_skin_ordered_dict = sorted(hero_skin_dict.items(), key=lambda x: x[1])
+    return render(request, 'statistics.html', context={
+        'labels_data': hero_skin_ordered_dict,
+        'total_num': total_num,
+        'warning_msg': warning_msg
     })
 
 def verify_list(request):

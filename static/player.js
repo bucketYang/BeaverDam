@@ -236,6 +236,11 @@ class Player {
                 thisx.triggerHandler('change-keyframes');
             }
         )
+        // show all annotations
+        $("#showall").click(function(){
+            thisx.triggerHandler('change-onscreen-annotations');
+            thisx.triggerHandler('change-keyframes');
+        });
         // Drawing annotations
         $(this).on('change-onscreen-annotations', () => {
             this.drawOnscreenAnnotations();
@@ -360,6 +365,11 @@ class Player {
         for (let {annotation, rect} of this.annotationRectBindings) {
             this.drawAnnotationOnRect(annotation, rect, isNameMatched);
         }
+        if($("#showall")[0].checked){
+            $("rect").removeClass("player-rect-nonameselected");
+            $(".player-rect-noreal").addClass("player-rect-noreal-none");
+            $(".player-rect-real").removeClass("player-rect-noreal-none");
+        };
     }
 
     drawKeyframes() {
@@ -376,7 +386,10 @@ class Player {
                 let selected = (annotation == this.selectedAnnotation);
                 this.view.keyframebar.addKeyframeAt(keyframe.time, {selected,isNameMatched});
             }
-        }
+        };
+        if($("#showall")[0].checked){
+            $("svg").removeClass("player-keyframebar-keyframe-noisNameMatched");
+        };
         $("#ischecked").html(nameselected+"("+key_number+")");
         $("#salary").html(str);
         $("#type_num").html(this.annotations.length);

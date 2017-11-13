@@ -10,6 +10,7 @@ admin.site.site_header = '视频标注工具'
 
 urlpatterns = [
     url(r'^$', home),
+    url(r'^statistics/$', statistics),
     url(r'^verify/$', verify_list),
     url(r'^verified/$', verified_list),
     url(r'^readytopay/$', ready_to_pay),

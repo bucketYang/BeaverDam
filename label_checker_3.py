@@ -6,9 +6,6 @@ import os
 import sys
 
 SQL_DB_NAME = 'db.sqlite3'
-TABLE_NAME = 'annotator_video'
-VIDEO_FIELD_NAME = 'filename'
-LABEL_FIELD_NAME = 'annotation'
 VIDEO_DIR = '/home/gemfield/video_annotation_web/'
 
 class AnnotationRecord():
@@ -23,8 +20,11 @@ class AnnotationRecord():
 # Fetch video_name & corresponding label_json_str
 def FetchLabelJson(id):
     conn = sqlite3.connect(SQL_DB_NAME)
+    suffix_condition = "where id=%s" %(id)
+    if id == 'all':
+        suffix_condition = ''
     cursor = conn.cursor()
-    cursor.execute('select %s,%s from %s where id=%s' %(VIDEO_FIELD_NAME, LABEL_FIELD_NAME, TABLE_NAME, id))
+    cursor.execute('select filename,annotation,image_list from annotator_video %s' %(suffix_condition))
     raw_sql_records = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -42,7 +42,7 @@ def ParseJson(raw_str):
         keyframes = annotation["keyframes"]
         for keyframe in keyframes:
             annotation_record = AnnotationRecord()
-            annotation_record.hero_name = hero_name.encode('utf-8').strip()
+            annotation_record.hero_name = hero_name
             annotation_record.time = keyframe['frame']
             annotation_record.x = int(round(keyframe['x']))
             annotation_record.y = int(round(keyframe['y']))
@@ -51,7 +51,10 @@ def ParseJson(raw_str):
             record_list.append(annotation_record)
     return record_list
 
-def GenerateLabelImgs(filename, json_result):
+def GenerateLabelImgs(filename, json_result, is_image_list):
+    if not is_image_list:
+        return
+    
     first_frame = 0
     if not json_result:
         return
@@ -72,37 +75,24 @@ def GenerateLabelImgs(filename, json_result):
     video_duration = frame_count/fps 
     print("duration of %s: %d: fps %f" %(abs_filename, frame_count, fps))
     for record in json_result:
-        hero_time = int(round(record.time * 1000))
-        frame_time = record.time * 1000000
-        if first_frame == 0:
-            first_frame = frame_time
-
-        diff = abs(frame_time - first_frame)
-        hero_frame = int(round(record.time * fps))
-
-        if hero_frame > 2:
-            hero_frame = hero_frame - 2
-        else:
-            hero_frame = 0
-
-        print("%s - %s - %f : %f (diff: %f)" %(base_filename.encode('utf-8').strip(), record.hero_name, record.time, video_duration, diff % 400000))
-        if record.time > video_duration:
-            print("============illegal: %f : %f (diff: %f)" %(record.time, video_duration, diff % 400000))
-            continue
+        #we got 1 frame in 10 frames
+        hero_frame = record.time * 10
         video_cap.set(cv2.CAP_PROP_POS_FRAMES, hero_frame)
-	    #video_cap.set(cv2.CAP_PROP_POS_MSEC, hero_time - 80)
+
         got_frame, frame = video_cap.read()
         if not got_frame:
-            print("Error: get frame %d failed on %s!" %(hero_time, abs_filename))
+            print("Error: get frame %d failed on %s!" %(hero_frame, abs_filename))
             continue
         # cut the desired area
-        #crop_img = frame[record.y : (record.y + record.h), record.x : (record.x + record.w)]
-        crop_img = cv2.rectangle(frame, (record.x, record.y), (record.x + record.w, record.y + record.h), (255,0,0))
-        crop_path = './annotation_output_rectangle/%s/%s/' %(filename.encode('utf-8').strip(), record.hero_name)
+        crop_img = frame[record.y : (record.y + record.h), record.x : (record.x + record.w)]
+        #crop_img = cv2.rectangle(frame, (record.x, record.y), (record.x + record.w, record.y + record.h), (255,0,0))
+        crop_path = './annotation_output/%s/' %(record.hero_name.encode('utf-8').strip())
         if not os.path.exists(crop_path):
             os.makedirs(crop_path)
 
-        crop_fname = "%s_%s_%s_%s_%s.jpg" %(str(hero_time), str(record.x), str(record.y), str(record.w),  str(record.h))
+        print(hero_frame, record.x, record.y, record.w, record.h)
+        crop_fname = "%s_%s_%s_%s_%s_%s.jpg" %(base_filename.encode('utf-8').strip(), str(hero_frame), str(record.x), str(record.y), str(record.w),  str(record.h))
+        print('imwrite: ',crop_path + crop_fname)
         cv2.imwrite(crop_path + crop_fname, crop_img)
 
 if __name__ == "__main__":
@@ -113,8 +103,11 @@ if __name__ == "__main__":
     id = sys.argv[1]
 
     raw_sql_result = FetchLabelJson(id)
-    for (filename, json_str) in raw_sql_result:
+    for (filename, json_str, image_list) in raw_sql_result:
+        is_image_list = False
+        if len(image_list) > 100:
+            is_image_list = True
         json_result = ParseJson(json_str)
         #filename is /static/vidoes/wzry1.mp4
-        GenerateLabelImgs(filename, json_result)
+        GenerateLabelImgs(filename, json_result, is_image_list)
 
